@@ -1,0 +1,1 @@
+echo "# ya-video-sharing-platform-bot" >> README.md
