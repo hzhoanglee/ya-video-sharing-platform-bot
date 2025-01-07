@@ -1,0 +1,7 @@
+pytest
+requests==2.32.0
+wheel==0.38.1
+aiohttp==3.10.11
+moviepy==2.1.1
+python-slugify==8.0.4
+googletrans==4.0.0-rc1
