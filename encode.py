@@ -117,6 +117,9 @@ class VideoProcessor:
         preview_url = self.upload_random_frame(video_path)
         
         video_length = self.get_video_length(video_path)
+
+        url1 = self.upload_m3u8(f'{hls_dir}/720p.m3u8', slug) 
+        url2 = self.upload_m3u8(f'{hls_dir}/original.m3u8', slug)  
         
         # Prepare and send POST request
         video_data = {
@@ -124,13 +127,11 @@ class VideoProcessor:
             "description": self.sanitize_text(message_caption),
             "slug": slug,
             "preview_image_url": preview_url,
-            "video_url_720p": f"{self.hls_target}/{slug}/720p.m3u8",
-            "video_url_1080p": f"{self.hls_target}/{slug}/original.m3u8",
+            "video_url_720p": url1,
+            "video_url_1080p": url2,
             "length": video_length
         }
 
-        print(video_data)
-        
         response = requests.post(os.getenv('YAVSP_ENDPOINT'), json=video_data)
         if response.status_code == 200:
             re = (f"Processed {video_file}: {response.status_code}")
@@ -220,7 +221,27 @@ class VideoProcessor:
             status_message.message_id
         )
         return process.returncode == 0
+    
 
+    def upload_m3u8(self, input_file, target_folder):
+        hls_repo = os.getenv("HLS_REPO")
+        try:
+            # no need to use subprocess, just use requests
+            response = requests.post(
+                hls_repo,
+                data= {
+                    "password": os.getenv("HLS_REPO_PASSWORD"),
+                    "hlsFile": open(input_file, "rb"),
+                    "path": target_folder
+                }
+            )
+            if response.status_code == 200:
+                # return the response text path: { "success": true, "path": "/vido3/720p (1).m3u8", "message": "File uploaded successfully" }
+                return hls_repo + '/view/hls/' + response.json().get("path")
+                
+        except Exception as e:
+            return hls_repo + '/view/hls/' + input_file
+            
     
     def sanitize_text(self, text):
         if text is None:
